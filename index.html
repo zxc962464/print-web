@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>文件上传打印</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- 引入 supabase-js v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/supabase.min.js"></script>
   <style>
     #status {
       margin-top: 10px;
@@ -12,7 +13,7 @@
   </style>
 </head>
 <body>
-<h2>上传文件打印</h2>
+<h2>上传文件打印2</h2>
 <input type="file" id="fileInput" />
 <button onclick="uploadFile()">上传打印</button>
 <div id="status"></div>
@@ -22,17 +23,23 @@
   const SUPABASE_URL = "https://jesixxdapfftvxkfndup.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Implc2l4eGRhcGZmdHh2a2ZuZHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3OTA1OTUsImV4cCI6MjA3MjM2NjU5NX0.ReMC_yE52E4s0MZDuXj6UUmTHoefr7uWZIUKugW-PSo";
 
+  // 初始化 Supabase 客户端
   const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   async function uploadFile() {
+    console.log("uploadFile 函数被触发");
+
     const file = document.getElementById('fileInput').files[0];
     const statusEl = document.getElementById('status');
+
     if (!file) {
+      console.log("没有选择文件");
       statusEl.textContent = "请选择文件";
       statusEl.style.color = "red";
       return;
     }
 
+    console.log("开始上传文件:", file.name);
     statusEl.textContent = "上传中...";
     statusEl.style.color = "black";
 
@@ -40,19 +47,19 @@
     const { data, error } = await supabase.storage.from('print-web').upload(`latest/${file.name}`, file, { upsert: true });
 
     if (error) {
+      console.log("上传失败", error);
       statusEl.textContent = "上传失败: " + error.message;
       statusEl.style.color = "red";
-      console.error(error);
     } else {
+      console.log("上传成功", data);
       statusEl.textContent = "上传成功: " + file.name;
       statusEl.style.color = "green";
-      console.log(data);
 
-      // 可选：删除超过 3 个的旧文件
+      // 可选：保留最新3个文件，其余删除
       const { data: files } = await supabase.storage.from('print-web').list('latest');
-      files.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-      if (files.length > 3) {
-        const toDelete = files.slice(3);
+      if (files && files.length > 3) {
+        const sorted = files.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        const toDelete = sorted.slice(3);
         for (const f of toDelete) {
           await supabase.storage.from('print-web').remove([`latest/${f.name}`]);
         }
