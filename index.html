@@ -2,25 +2,27 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>打印上传 Demo</title>
+  <title>文件上传打印</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-<h2>上传 PDF 打印</h2>
-<input type="file" id="fileInput" accept=".pdf" />
+<h2>上传文件打印</h2>
+<input type="file" id="fileInput" />
 <button onclick="uploadFile()">上传打印</button>
 
 <script>
-const SUPABASE_URL = "你的Supabase项目URL";
-const SUPABASE_ANON_KEY = "你的匿名Key";
+const SUPABASE_URL = "https://jesixxdapfftvxkfndup.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Implc2l4eGRhcGZmdHh2a2ZuZHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY3OTA1OTUsImV4cCI6MjA3MjM2NjU5NX0.ReMC_yE52E4s0MZDuXj6UUmTHoefr7uWZIUKugW-PSo";
+
 const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 async function uploadFile() {
   const file = document.getElementById('fileInput').files[0];
-  if (!file) { alert("请选择文件"); return; }
+  if(!file) { alert("请选择文件"); return; }
 
-  // 上传文件到 Storage，覆盖同名文件
-  await supabase.storage.from('prints').upload(`latest/${file.name}`, file, { upsert: true });
+  // 上传到 Storage 'prints/latest' 文件夹，upsert: true 会覆盖同名文件
+  const { error } = await supabase.storage.from('prints').upload(`latest/${file.name}`, file, { upsert: true });
+  if(error) { alert("上传失败：" + error.message); return; }
 
   // 获取最新文件列表
   let { data: files } = await supabase.storage.from('prints').list('latest');
@@ -34,7 +36,7 @@ async function uploadFile() {
     }
   }
 
-  alert("上传成功，已加入打印队列");
+  alert("上传成功，文件已加入打印队列");
 }
 </script>
 </body>
