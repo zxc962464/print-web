@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>打印上传 Demo</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<h2>上传 PDF 打印</h2>
+<input type="file" id="fileInput" accept=".pdf" />
+<button onclick="uploadFile()">上传打印</button>
+
+<script>
+const SUPABASE_URL = "你的Supabase项目URL";
+const SUPABASE_ANON_KEY = "你的匿名Key";
+const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+async function uploadFile() {
+  const file = document.getElementById('fileInput').files[0];
+  if (!file) { alert("请选择文件"); return; }
+
+  // 上传文件到 Storage，覆盖同名文件
+  await supabase.storage.from('prints').upload(`latest/${file.name}`, file, { upsert: true });
+
+  // 获取最新文件列表
+  let { data: files } = await supabase.storage.from('prints').list('latest');
+  files.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+
+  // 保留最新3个文件
+  if(files.length > 3){
+    const toDelete = files.slice(3);
+    for(const f of toDelete){
+      await supabase.storage.from('prints').remove([`latest/${f.name}`]);
+    }
+  }
+
+  alert("上传成功，已加入打印队列");
+}
+</script>
+</body>
+</html>
